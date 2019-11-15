@@ -3,12 +3,18 @@ const github = require('@actions/github');
 
 async function run() {
   try {
-    const myInput = core.getInput('myInput');
-    core.debug(`Hello ${myInput} from inside a container`);
+    const myToken = core.getInput('GITHUB_TOKEN');
+    const octokit = new github.GitHub(myToken);
+    console.log(github.context);
 
-    // Get github context data
-    const context = github.context;
-    console.log(`We can even get context data, like the repo: ${context.repo.repo}`)
+    // const prReviews = await octokit.pulls.listReviews({
+    //   github.context.actor,
+    //   github.context.repository,
+    //   github.context.pull_request.number
+    // });
+    console.log("test specific workflow");
+    // console.log(prReviews);
+//
   } catch (error) {
     core.setFailed(error.message);
   }

@@ -1,10 +1,5 @@
-name: 'Container Action Template'
-description: 'Get started with Container actions'
-author: 'GitHub'
-inputs: 
-  myInput:
-    description: 'Input to use'
-    default: 'world'
+name: 'AutoLabel'
+description: 'Label state machine for easel/fbolt'
 runs:
   using: 'docker'
   image: 'Dockerfile'
