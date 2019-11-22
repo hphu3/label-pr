@@ -36,6 +36,10 @@ function labelToApply(reviews) {
   }
 }
 
+function labelToRemove(labelToApply) {
+  return labelToApply === core.getInput('approved-label') ? core.getInput('changes-requested-label') : core.getInput('approved-label');
+}
+
 async function run() {
   try {
     const myToken = core.getInput('github-token');
@@ -56,12 +60,25 @@ async function run() {
     });
 
     const newLabel = labelToApply(prReviews.data);
+
+
     if (newLabel !== null) {
+      const removeLabel = labelToRemove(newLabel)
+
+      console.log(`applying ${newLabel} to PR`)
       await octokit.issues.addLabels({
         owner: owner,
         repo: repo,
         issue_number: prNumber,
         labels: [newLabel]
+      });
+
+      console.log(`removing ${removeLabel} from PR`)
+      await octokit.issues.removeLabel({
+        owner: owner,
+        repo: repo,
+        issue_number: prNumber,
+        name: removeLabel
       });
     }
   } catch (error) {
