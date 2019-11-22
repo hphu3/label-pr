@@ -61,10 +61,7 @@ async function run() {
 
     const newLabel = labelToApply(prReviews.data);
 
-
     if (newLabel !== null) {
-      const removeLabel = labelToRemove(newLabel)
-
       console.log(`applying ${newLabel} to PR`)
       await octokit.issues.addLabels({
         owner: owner,
@@ -73,13 +70,20 @@ async function run() {
         labels: [newLabel]
       });
 
-      console.log(`removing ${removeLabel} from PR`)
-      await octokit.issues.removeLabel({
-        owner: owner,
-        repo: repo,
-        issue_number: prNumber,
-        name: removeLabel
-      }).catch((err) => console.log(`error deleting label ${err}`));
+      const removeLabel = labelToRemove(newLabel)
+      const reviewLabels = [core.getInput('review-label'), core.getInput('re-review-label'), removeLabel];
+
+      const removePromises = reviewLabels.map(label => {
+        return octokit.issues.removeLabel({
+          owner: owner,
+          repo: repo,
+          issue_number: prNumber,
+          name: label
+        });
+      })
+
+      console.log(`removing ${reviewLabels.join(", ")} from PR`)
+      await Promise.all(removePromises).catch((err) => console.log(`Error deleting label ${err}`));
     }
   } catch (error) {
     console.error(error);
