@@ -24,10 +24,13 @@ function labelToApply(reviews) {
 
   let remainingChangesRequested: number = Object.values(changesRequested).reduce((a, b) => a + b);
 
+  const approvedLabel = core.getInput('approved-label');
+  const changesRequestedLabel = core.getInput('changes-requested-label');
+
   if (remainingChangesRequested > 0) {
-    return "Reviewed";
+    return changesRequestedLabel;
   } else if (approvals >= 1) {
-    return "LG";
+    return approvedLabel;
   } else {
     return null;
   }
