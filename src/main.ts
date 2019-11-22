@@ -1,6 +1,25 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 
+const githubReviewStates = {
+  approved: "APPROVED",
+  changesRequested: "CHANGES_REQUESTED",
+  comment: "COMMENT"
+}
+
+function labelToApply(reviewStates) {
+  const changesRequested = reviewStates.includes(githubReviewStates.changesRequested)
+  const approved = reviewStates.includes(githubReviewStates.approved)
+
+  if (changesRequested) {
+    return "Reviewed";
+  } else if (approved) {
+    return "LG";
+  } else {
+    return null;
+  }
+}
+
 async function run() {
   try {
     const myToken = core.getInput('github-token');
@@ -19,25 +38,19 @@ async function run() {
       repo: github.context.payload.repository.name,
       pull_number: github.context.payload.pull_request.number
     });
-    console.log(prReviews);
 
-    for (let review of prReviews.data) {
-      if (review.state === "APPROVED") {
-        console.log("approve review detected" + review)
+    const reviewStates = prReviews.data.map(review => review.state);
 
-        const addLabel = await octokit.issues.addLabels({
-          owner: owner,
-          repo: repo,
-          issue_number: prNumber,
-          labels: ["LG"]
-        });
-        console.log(addLabel);
-
-        break;
-      }
-    };
-
+    if (labelToApply !== null) {
+      await octokit.issues.addLabels({
+        owner: owner,
+        repo: repo,
+        issue_number: prNumber,
+        labels: [labelToApply(reviewStates)]
+      });
+    }
   } catch (error) {
+    console.error(error);
     core.setFailed(error.message);
   }
 }
