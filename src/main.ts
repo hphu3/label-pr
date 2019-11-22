@@ -7,13 +7,26 @@ const githubReviewStates = {
   comment: "COMMENT"
 }
 
-function labelToApply(reviewStates) {
-  const changesRequested = reviewStates.includes(githubReviewStates.changesRequested)
-  const approved = reviewStates.includes(githubReviewStates.approved)
+function labelToApply(reviews) {
+  let changesRequested: object = {};
+  let approvals: number = 0;
 
-  if (changesRequested) {
+  // order matters -- later approvals cancel out earlier request changes
+  // and later request changes cancel earlier approvals
+  for (let review of reviews){
+    if (review.state === githubReviewStates.changesRequested) {
+      changesRequested[review.user.id] = changesRequested[review.user.id] ? changesRequested[review.user.id] + 1 : 1;
+    } else if (review.state === githubReviewStates.approved) {
+      changesRequested[review.user.id] = changesRequested[review.user.id] ? changesRequested[review.user.id] - 1 : null;
+      approvals += 1;
+    }
+  }
+
+  let remainingChangesRequested: number = Object.values(changesRequested).reduce((a, b) => a + b);
+
+  if (remainingChangesRequested > 0) {
     return "Reviewed";
-  } else if (approved) {
+  } else if (remainingChangesRequested > 0 && approvals >= 1) {
     return "LG";
   } else {
     return null;
@@ -39,14 +52,12 @@ async function run() {
       pull_number: github.context.payload.pull_request.number
     });
 
-    const reviewStates = prReviews.data.map(review => review.state);
-
     if (labelToApply !== null) {
       await octokit.issues.addLabels({
         owner: owner,
         repo: repo,
         issue_number: prNumber,
-        labels: [labelToApply(reviewStates)]
+        labels: [labelToApply(prReviews.data)]
       });
     }
   } catch (error) {
