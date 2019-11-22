@@ -79,7 +79,7 @@ async function run() {
         repo: repo,
         issue_number: prNumber,
         name: removeLabel
-      });
+      }).catch((err) => console.log(`error deleting label ${err}`));
     }
   } catch (error) {
     console.error(error);
