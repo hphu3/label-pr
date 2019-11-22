@@ -26,7 +26,7 @@ function labelToApply(reviews) {
 
   if (remainingChangesRequested > 0) {
     return "Reviewed";
-  } else if (remainingChangesRequested > 0 && approvals >= 1) {
+  } else if (approvals >= 1) {
     return "LG";
   } else {
     return null;
@@ -52,12 +52,13 @@ async function run() {
       pull_number: github.context.payload.pull_request.number
     });
 
-    if (labelToApply !== null) {
+    const newLabel = labelToApply(prReviews.data);
+    if (newLabel !== null) {
       await octokit.issues.addLabels({
         owner: owner,
         repo: repo,
         issue_number: prNumber,
-        labels: [labelToApply(prReviews.data)]
+        labels: [newLabel]
       });
     }
   } catch (error) {
